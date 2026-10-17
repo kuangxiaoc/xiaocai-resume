@@ -1,9 +1,10 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07#",
   "title": "Resume Profile",
-  "description": "profile.yaml 的结构定义。agent 首次引导用户填写时，以及每次生成前自检时，都应符合此结构（可选机检见 scripts/check_profile.py）。",
+  "description": "profile.yaml 的结构定义。agent 首次引导用户填写、每次生成前取材、以及用户后续追加素材时，都应符合此结构（可选机检见 scripts/check_profile.py）。设计原则：每类素材有明确归属，归不进已知字段的进 extras；schema 是存储层，不要求每次生成全部渲染。",
   "type": "object",
   "required": ["meta", "education", "experience", "projects", "skills"],
+  "additionalProperties": true,
   "properties": {
     "meta": {
       "type": "object",
@@ -13,13 +14,25 @@
         "phone": { "type": "string", "description": "手机号，建议字符串避免被科学计数" },
         "email": { "type": "string", "description": "邮箱" },
         "city": { "type": "string", "description": "所在城市" },
-        "age": { "type": "number" },
-        "gender": { "type": "string" },
+        "age": { "type": "number", "description": "非必要，默认不进简历" },
+        "gender": { "type": "string", "description": "非必要，默认不进简历" },
         "github": { "type": "string", "description": "GitHub 主页 URL" },
         "photo": { "type": "string", "description": "证件照文件名，位于 profiles/<user>/ 下" },
         "availability": { "type": "string", "description": "到岗时间，如 月内到岗" }
       },
       "additionalProperties": true
+    },
+    "summary": {
+      "type": "array",
+      "description": "个人总结/自我评价，按方向分组，生成时按 JD 选用",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
     },
     "education": {
       "type": "array",
@@ -33,7 +46,7 @@
           "college": { "type": "string" },
           "period": { "type": "string", "description": "起止，如 2022.09—2026.06" },
           "courses": { "type": "array", "items": { "type": "string" } },
-          "awards": { "type": "array", "items": { "type": "string" } },
+          "awards": { "type": "array", "items": { "type": "string" }, "description": "就读期间奖项；与顶层 awards 可重复，顶层用于简历统一展示" },
           "direction": { "type": "string", "description": "研究方向" },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "用于按 JD 精选，如 undergrad/grad/llm" }
         }
@@ -41,6 +54,7 @@
     },
     "experience": {
       "type": "array",
+      "description": "实习/工作等任职类经历",
       "items": {
         "type": "object",
         "required": ["org", "role", "period", "bullets"],
@@ -71,6 +85,7 @@
     },
     "projects": {
       "type": "array",
+      "description": "科研/课程/个人/竞赛项目",
       "items": {
         "type": "object",
         "required": ["name", "period", "bullets"],
@@ -79,6 +94,8 @@
           "name": { "type": "string" },
           "period": { "type": "string" },
           "summary": { "type": "string" },
+          "status": { "type": "string", "description": "如 已投稿/在审/已接收/已上线/进行中；简历措辞必须以此为准" },
+          "attachment": { "type": "string", "description": "证明材料文件名，位于 profiles/<user>/attachments/" },
           "tags": { "type": "array", "items": { "type": "string" } },
           "bullets": {
             "type": "array",
@@ -111,7 +128,68 @@
         }
       }
     },
-    "awards": { "type": "array", "items": { "type": "string" } },
-    "open_source": { "type": "array" }
+    "awards": {
+      "type": "array",
+      "description": "获奖/奖学金/荣誉",
+      "items": { "type": "string" }
+    },
+    "open_source": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "desc": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "publications": {
+      "type": "array",
+      "description": "论文/专利。status 决定简历上能怎么写：仅「已发表/已接收」可写发表，其余只能写「在审」或省略",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "authors": { "type": "string", "description": "作者列表，注明本人位次" },
+          "venue": { "type": "string", "description": "期刊/会议名" },
+          "year": { "type": "string" },
+          "status": { "type": "string", "description": "已投稿/在审/已接收/已发表" },
+          "attachment": { "type": "string", "description": "PDF 文件名，位于 profiles/<user>/attachments/" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "extras": {
+      "type": "array",
+      "description": "兜底：暂不属于上述任何一类的素材放这里，保证不漏记",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "type": { "type": "string", "description": "素材类型，如 技术分享/社团/志愿经历" },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "period": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "description": "profiles/<user>/attachments/ 下的材料清单，供生成时引用与核对",
+      "items": {
+        "type": "object",
+        "required": ["file"],
+        "properties": {
+          "file": { "type": "string", "description": "文件名，不含路径" },
+          "desc": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@
 //   node scripts/resume.mjs build <path/to/resume.tex>
 //   node scripts/resume.mjs validate <path/to/resume.pdf>
 //   node scripts/resume.mjs check-profile <path/to/profile.yaml>
+//   node scripts/resume.mjs find-profile [<user>]
 //
 // 约定：所有外部调用走 spawnSync 传参数数组（不使用 shell），路径统一走 node:path；
 // 失败必须非零退出，机械动作保持确定性。
@@ -302,6 +303,60 @@ function cmdValidate(args) {
   process.exit(0);
 }
 
+// ---------- find-profile ----------
+
+// 素材库发现顺序与 SKILL.md 第 0 步一致：工作空间 profiles/<user>/ 优先，
+// 其次全局 ~/.agents/resume-builder/profiles/<user>/。只做确定性路径探测，
+// 不读取内容、不做选择，选择权交给用户。
+function profileSearchDirs(user) {
+  const dirs = [];
+  if (user) {
+    dirs.push(path.resolve('profiles', user));
+    dirs.push(path.join(os.homedir(), '.agents', 'resume-builder', 'profiles', user));
+  } else {
+    dirs.push(path.resolve('profiles'));
+    dirs.push(path.join(os.homedir(), '.agents', 'resume-builder', 'profiles'));
+  }
+  return dirs;
+}
+
+function cmdFindProfile(args) {
+  const user = args[0] || '';
+  const found = [];
+  for (const dir of profileSearchDirs(user)) {
+    const yaml = path.join(dir, 'profile.yaml');
+    if (fs.existsSync(yaml)) found.push(yaml);
+  }
+
+  if (found.length === 0) {
+    // 列出已知 profile 标识，便于用户确认 <user> 拼写
+    const known = [];
+    for (const dir of profileSearchDirs('')) {
+      if (!fs.existsSync(dir)) continue;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        if (fs.existsSync(path.join(dir, entry.name, 'profile.yaml'))) known.push(entry.name);
+      }
+    }
+    if (user) console.error(`❌ 未找到 user='${user}' 的 profile.yaml`);
+    if (known.length > 0) {
+      console.error('已存在的素材库标识：');
+      for (const name of known) console.error(`  ${name}`);
+      console.error("重试：node scripts/resume.mjs find-profile <user>");
+    } else {
+      console.error('未发现任何素材库。按 SKILL.md 第 0 步引导用户建立 profile.yaml');
+    }
+    process.exit(1);
+  }
+
+  for (const p of found) console.log(p);
+  if (found.length > 1) {
+    console.error(`⚠️ 发现 ${found.length} 个候选素材库，先询问用户本次使用哪一个`);
+    process.exit(2);
+  }
+  process.exit(0);
+}
+
 // ---------- check-profile ----------
 
 function cmdCheckProfile(args) {
@@ -340,6 +395,7 @@ const USAGE = [
   '  build <path/to/resume.tex>           编译（xelatex ×2，先查引擎+中文宏包）',
   '  validate <path/to/resume.pdf>        编译产物基础检查（页数 / 明显错误）',
   '  check-profile <path/to/profile.yaml> 校验 profile.yaml（可选，需 python3 + pyyaml）',
+  '  find-profile [<user>]               定位素材库 profile.yaml（工作空间优先，其次全局）',
 ];
 
 const [command, ...rest] = process.argv.slice(2);
@@ -359,6 +415,9 @@ switch (command) {
     break;
   case 'check-profile':
     cmdCheckProfile(rest);
+    break;
+  case 'find-profile':
+    cmdFindProfile(rest);
     break;
   default:
     printUsage(USAGE);

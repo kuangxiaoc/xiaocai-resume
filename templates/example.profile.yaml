@@ -13,6 +13,10 @@ meta:
   photo: photo.jpg
   availability: 月内到岗
 
+summary:
+  - text: 专注后端与 LLM 应用方向，具备从需求分析到原型验证的完整工程实践能力。
+    tags: [backend, llm]
+
 education:
   - school: 某理工大学
     degree: 本科
@@ -48,6 +52,7 @@ projects:
   - id: doc-qa
     name: 文档智能问答工具
     period: "2024.03"
+    status: 已上线
     summary: 基于 LangChain 的本地文档问答小工具
     tags: [langchain, rag, llm, python]
     bullets:
@@ -72,4 +77,27 @@ skills:
     tags: [llm, backend]
 
 awards: [校级一等奖学金, 数学建模省赛二等奖]
-open_source: []
+
+open_source:
+  - name: some-lib
+    url: https://github.com/zhangming/some-lib
+    desc: 轻量 PDF 解析库
+    tags: [python, pdf]
+
+# 论文/专利：status 决定简历措辞，未标注 status 不得写成「已发表」
+publications:
+  - title: 某方向的研究论文
+    authors: 张明, 李某
+    venue: 某会议
+    year: "2025"
+    status: 在审
+    attachment: paper.pdf
+
+# 兜底：不属于以上任何一类的素材放这里，保证不漏记
+extras: []
+
+# attachments/ 下的材料清单，便于生成时引用
+attachments:
+  - file: paper.pdf
+    desc: 论文预印本
+    tags: [research]

@@ -86,14 +86,40 @@ ln -s "$PWD/xiaocai-resume" ~/.agents/skills/xiaocai-resume
 这里放**稳定的个人事实**，也就是不随岗位变化的内容：
 
 ```yaml
-meta:
-education:
-experience:
-projects:
-skills:
+meta:          # 姓名、联系方式、照片、links
+summary:       # 个人总结，按方向分组
+education:     # 教育经历
+experience:    # 实习/工作经历
+projects:      # 科研/课程/个人项目
+skills:        # 技能分类
+awards:        # 获奖与奖学金
+open_source:   # 开源项目
+publications:  # 论文/专利，status 决定简历措辞
+extras:        # 兜底：暂不归类的素材
+attachments:   # attachments/ 目录的材料清单
 ```
 
-它是长期维护的主素材库。新增经历、修正时间、补充项目成果，都改这里。
+完整字段定义见 [`contracts/profile.schema.json`](contracts/profile.schema.json)。
+它是长期维护的主素材库。新增经历、修正时间、补充项目成果，都改这里——
+**不用一次填全**，缺的字段先空着，之后随时追加。
+
+#### 追加素材
+
+不用走任何流程，也不用重建素材库。直接对 agent 说：
+
+```
+把这段加进素材库：[粘贴内容]
+```
+
+或指明位置：
+
+```
+在素材库的 projects 里加一条，叫 XXX，内容是……
+```
+
+agent 会判断归属字段后写入，并告诉落在哪。拿不准归类的进 `extras`。
+证明材料（论文 PDF 等）放该 profile 目录的 `attachments/`，并在 `attachments`
+清单登记；论文同时在 `publications` 记一条。
 
 ### 2. 工作空间本地补充素材（可选）
 
@@ -126,6 +152,10 @@ skills:
 帮我做一份简历，投这个岗位：
 [粘贴 JD，或给 JD 链接]
 ```
+
+agent 会先跑 `node scripts/resume.mjs find-profile [<user>]` 定位素材库
+（当前工作空间的 `profiles/` 优先，其次全局目录）。因为素材库在用户目录，
+换 agent（Claude Code / Codex / WorkBuddy）、换项目目录都不影响读取。
 
 首次使用时，agent 会引导你建立素材库：
 1. 你粘贴个人经历文本，或给出旧简历 / 资料的文件路径；

@@ -2,6 +2,20 @@
 % 简历 tex 骨架 —— agent 据此手写，勿自由创造结构
 % 编译：node <skill>/scripts/resume.mjs build path/to/resume.tex
 % 规范：contracts/latex-rules.md
+%
+% profile.yaml 字段 → 章节映射（只列有对应章节的字段）：
+%   meta            → 标题区（姓名/联系方式/目标岗位/照片）
+%   summary         → 个人总结（可选，按 JD 方向选用）
+%   education       → 教育经历
+%   experience      → 实习经历
+%   projects        → 项目经历
+%   skills          → 技能
+%   awards          → 获奖（可选）
+%   open_source     → 开源（可选）
+%   publications    → 论文/专利（可选；措辞必须遵循 status）
+%   extras          → 兜底素材（可选，视相关性与篇幅决定去留）
+% 没有对应章节的字段不代表可以忽略：无章节承载时不得写进简历，
+% 但仍需留在 profile.yaml 中作为已积累素材。
 \documentclass{resume}
 \ResumeName{<姓名>}
 
@@ -63,6 +77,22 @@
 % ========== 技能 ==========
 \section{技能}
 \ResumeItem{分类}{技能项列表}
+
+% ========== 个人总结（可选，取自 profile.yaml: summary） ==========
+% 按 JD 方向选一条最贴合的，不要多条堆叠；一页紧张时整节省略。
+% \section{个人总结}
+% \GrayText{summary[].text}
+
+% ========== 开源（可选，取自 profile.yaml: open_source） ==========
+% 与 JD 强相关时保留，否则省略。
+% \section{开源}
+% \ResumeItem{项目名}[作者/贡献者][起止]
+% desc
+
+% ========== 论文/专利（可选，取自 profile.yaml: publications） ==========
+% status 为「已发表/已接收」才可写发表；「在审/已投稿」只能写「在审」或省略。
+% \section{论文}
+% \GrayText{标题（本人第 X 作者），venue，year，status}
 
 % ========== 获奖（可选） ==========
 \section{获奖}
